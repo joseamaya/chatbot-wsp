@@ -18,17 +18,18 @@ This project is a WhatsApp chatbot built with Python and FastAPI. It leverages n
 - Python 3.12+
 - FastAPI
 - MongoDB (for vector storage)
-- LangGraph CLI (for graph visualization and testing)
+- Langchain
+- LangGraph
 
 ## Installation
 
 1. **Clone the repository:**
    ```bash
-   git clone <repo-url>
+   git clone https://github.com/joseamaya/chatbot-wsp.git
    cd chatbot-wsp
    ```
 
-2. **Create a virtual environment (optional but recommended):**
+2. **Create a virtual environment:**
    ```bash
    python3 -m venv venv
    source venv/bin/activate
@@ -36,17 +37,12 @@ This project is a WhatsApp chatbot built with Python and FastAPI. It leverages n
 
 3. **Install dependencies:**
    ```bash
-   pip install -r requirements.txt
+   pip install -r requirements/dev.txt
    ```
 
-4. **Configure environment variables:**
-   - Edit `config/settings.py` to add your credentials and settings (tokens, keys, etc).
-   - Make sure you have a running and accessible MongoDB instance.
-
-5. **(Optional) Install LangGraph CLI:**
-   ```bash
-   pip install langgraph
-   ```
+4. **Create environment file:**
+   - cp .env.example .env.
+   - Fill in the required environment variables in `.env`.
 
 ## Usage
 
@@ -64,14 +60,6 @@ This project is a WhatsApp chatbot built with Python and FastAPI. It leverages n
      langgraph dev
      ```
    - This will allow you to see the graph in action and run tests interactively.
-
-## Development & Testing
-
-- Install development dependencies:
-  ```bash
-  pip install -r requirements-dev.txt
-  ```
-- Run your tests or development scripts as needed.
 
 ## Notes
 
