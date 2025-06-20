@@ -1,0 +1,57 @@
+# Python cache files
+__pycache__/
+*/__pycache__/
+*/*/__pycache__/
+**/__pycache__/
+*.py[cod]
+*/*.py[cod]
+*/*/*.py[cod]
+**/*.py[cod]
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.env
+.venv
+.python-version
+
+# IDE specific files
+.idea/
+.vscode/
+.langgraph_api/
+*.swp
+*.swo
+.DS_Store
+
+# Project specific
+langgraph.json
+test_main.http
+
+# Logs
+*.log
+logs/
+
+# Coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Local development configuration
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
