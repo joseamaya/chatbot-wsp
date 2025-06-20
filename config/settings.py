@@ -20,17 +20,11 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = os.environ.get('OPENAI_API_KEY')
     DEBUG: bool = False
 
-    def get_whatsapp_api_headers(self) -> dict:
-        """
-        Retorna los headers necesarios para las llamadas a la API de WhatsApp
-        """
-        return {
-            "Authorization": f"Bearer {self.WHATSAPP_TOKEN}",
-            "Content-Type": "application/json"
-        }
 
 class LocalConfig(Settings):
-    MONGO_DB_URL: str = 'mongodb://localhost:32768/?directConnection=true'
+    HOST: str = os.getenv('MONGO_HOST', 'localhost')
+    MONGO_PORT: str = os.getenv("MONGO_PORT", "27017")
+    MONGO_DB_URL: str = f'mongodb://{HOST}:{MONGO_PORT}'#?directConnection=true'
 
 
 class ProductionConfig(Settings):
@@ -45,6 +39,6 @@ def get_settings() -> Settings:
     """
     Retorna una instancia cacheada de la configuración
     """
-    env = os.getenv("ENVIRONMENT", "local")
-    settings = LocalConfig() if env == "local" else ProductionConfig()
+    env = os.getenv("ENVIRONMENT", "development")
+    settings = LocalConfig() if env == "development" else ProductionConfig()
     return settings

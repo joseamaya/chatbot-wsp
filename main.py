@@ -7,9 +7,9 @@ from database.connection import MongoDBConnection
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await MongoDBConnection.connect_to_mongo()
+    await MongoDBConnection.connect_to_async_mongo()
     yield
-    await MongoDBConnection.close_mongo_connection()
+    await MongoDBConnection.close_async_mongo()
 
 
 app = FastAPI(lifespan=lifespan, debug=True)

@@ -1,0 +1,30 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        - ENVIRONMENT=development
+    container_name: chatbot-wsp-app
+    ports:
+      - "8000:8000"
+      - "2024:2024"
+    volumes:
+      - .:/app
+    depends_on:
+      - mongo
+    env_file:
+      - .env
+    stdin_open: true
+    tty: true
+
+  mongo:
+    image: mongodb/mongodb-atlas-local
+    container_name: chatbot-wsp-mongo
+    restart: always
+    ports:
+      - "32768:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
