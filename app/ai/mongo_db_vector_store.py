@@ -2,8 +2,8 @@ from typing import Optional, Dict, ClassVar
 from functools import lru_cache
 from langchain_mongodb import MongoDBAtlasVectorSearch
 
-from ai.embeddings import get_embeddings
-from database.connection import MongoDBConnection
+from app.ai.embeddings import get_embeddings
+from app.database.connection import MongoDBConnection
 
 
 class MongoDBVectorStore:

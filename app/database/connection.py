@@ -1,7 +1,7 @@
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pymongo import MongoClient
 from pymongo.database import Database
-from config.settings import get_settings
+from app.config.settings import get_settings
 
 settings = get_settings()
 

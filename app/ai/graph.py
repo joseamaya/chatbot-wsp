@@ -2,9 +2,9 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.constants import START, END
 from langgraph.graph import StateGraph
 
-from ai.nodes import memory_extraction_node, memory_injection_node, retrieve, generate_response
-from ai.retrievers import get_retriever_mongodb
-from ai.state import State
+from app.ai.nodes import memory_extraction_node, memory_injection_node, retrieve, generate_response
+from app.ai.retrievers import get_retriever_mongodb
+from app.ai.state import State
 
 
 def create_workflow_graph():

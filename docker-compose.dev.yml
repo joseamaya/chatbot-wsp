@@ -22,7 +22,7 @@ services:
     container_name: chatbot-wsp-mongo
     restart: always
     ports:
-      - "32768:27017"
+      - "27017:27017"
     volumes:
       - mongo_data:/data/db
 

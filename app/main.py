@@ -1,8 +1,8 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from routes.whatsapp import whatsapp_router
-from database.connection import MongoDBConnection
+from app.routes.whatsapp import whatsapp_router
+from app.database.connection import MongoDBConnection
 
 
 @asynccontextmanager

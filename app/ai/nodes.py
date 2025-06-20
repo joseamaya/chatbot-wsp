@@ -2,8 +2,8 @@ import logging
 
 from langchain_core.runnables import RunnableConfig
 
-from ai.chains import get_memory_chain, get_character_chain
-from ai.state import State
+from app.ai.chains import get_memory_chain, get_character_chain
+from app.ai.state import State
 
 logger = logging.getLogger(__name__)
 

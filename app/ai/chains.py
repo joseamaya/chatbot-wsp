@@ -4,7 +4,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
-from ai.prompts import MEMORY_ANALYSIS_PROMPT, CHARACTER_PROMPT
+from app.ai.prompts import MEMORY_ANALYSIS_PROMPT, CHARACTER_PROMPT
 
 
 class MemoryAnalysis(BaseModel):

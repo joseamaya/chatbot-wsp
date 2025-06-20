@@ -4,14 +4,30 @@ This project is a WhatsApp chatbot built with Python and FastAPI. It leverages n
 
 ## Project Structure
 
-- `main.py`: Main entry point of the FastAPI application.
-- `ai/`: AI logic, chains, nodes, embeddings, prompts, and vector storage.
-- `config/settings.py`: General project configuration.
-- `database/`: Database connection and dependencies.
-- `routes/whatsapp.py`: FastAPI routes for WhatsApp integration.
-- `requirements.txt`: Main dependencies.
-- `requirements-dev.txt`: Development dependencies.
-- `langgraph.json`: LangGraph configuration file.
+```
+.
+├── app/                    # Main application code
+│   ├── main.py            # FastAPI application entry point
+│   ├── ai/                # AI-related modules
+│   │   ├── chains.py      # LangChain chains
+│   │   ├── edges.py       # Graph edges
+│   │   ├── embeddings.py  # Text embeddings
+│   │   ├── graph.py       # Graph configuration
+│   │   ├── nodes.py       # Graph nodes
+│   │   ├── prompts.py     # AI prompts
+│   │   ├── retrievers.py  # Vector store retrievers
+│   │   └── state.py       # Graph state management
+│   ├── config/            # Configuration modules
+│   ├── database/          # Database connections
+│   └── routes/            # API endpoints
+├── requirements/          # Dependency files
+│   ├── base.txt          # Base requirements
+│   ├── development.txt   # Development requirements
+│   └── production.txt    # Production requirements
+├── docker-compose.dev.yml  # Docker development config
+├── docker-compose.prod.yml # Docker production config
+└── Dockerfile             # Docker image definition
+```
 
 ## Requirements
 

@@ -1,4 +1,4 @@
-from ai.mongo_db_vector_store import get_mongo_db_vector_store
+from app.ai.mongo_db_vector_store import get_mongo_db_vector_store
 
 
 def get_retriever_mongodb(k: int, collection_name: str, index_name: str, filters: list):

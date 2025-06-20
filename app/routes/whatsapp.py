@@ -1,11 +1,8 @@
-import logging
-import os
-
 from fastapi import APIRouter, Request, Response
-from langchain_core.messages import HumanMessage
-from langgraph.checkpoint.mongodb import AsyncMongoDBSaver
+import logging
 
-from config.settings import get_settings
+from app.config.settings import get_settings
+from app.ai import graph_builder
 
 whatsapp_router = APIRouter(
     prefix="/webhook",
@@ -18,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 @whatsapp_router.api_route("/whatsapp_response", methods=["GET", "POST"])
 async def whatsapp_handler(request: Request) -> Response:
-    from ai import graph_builder
     """Handles incoming messages and status updates from the WhatsApp Cloud API."""
 
     if request.method == "GET":
