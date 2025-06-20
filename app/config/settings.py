@@ -24,7 +24,7 @@ class Settings(BaseSettings):
 class LocalConfig(Settings):
     HOST: str = os.getenv('MONGO_HOST', 'localhost')
     MONGO_PORT: str = os.getenv("MONGO_PORT", "27017")
-    MONGO_DB_URL: str = f'mongodb://{HOST}:{MONGO_PORT}'#?directConnection=true'
+    MONGO_DB_URL: str = f'mongodb://{HOST}:{MONGO_PORT}'
 
 
 class ProductionConfig(Settings):
