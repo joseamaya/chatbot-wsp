@@ -15,7 +15,7 @@ async def memory_extraction_node(state: State, retriever, config: RunnableConfig
         config = config.get("configurable")
         chat_id = config.get("chat_id")
         try:
-            retriever.vectorstore.add_texts(
+            await retriever.vectorstore.aadd_texts(
                 texts=[response.formatted_memory],
                 metadatas=[{"chat_id": chat_id}]
             )
