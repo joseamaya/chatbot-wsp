@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Request, Response
 import logging
 
+from langchain_core.messages import HumanMessage
+
 from app.config.settings import get_settings
 from app.ai import graph_builder
 
