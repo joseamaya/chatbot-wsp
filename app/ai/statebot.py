@@ -3,7 +3,7 @@ from langchain.schema import Document
 from langgraph.graph import MessagesState
 
 
-class State(MessagesState):
+class StateBot(MessagesState):
     memory_context: str
     context: List[Document]
     answer: str

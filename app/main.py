@@ -2,11 +2,12 @@ import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from pyngrok import ngrok
 
+from app.database.connection import MongoDBConnection
 from app.routes.bots import bots_router
 from app.routes.whatsapp import whatsapp_router
-from app.database.connection import MongoDBConnection
-from app.utils import setup_ngrok
+from app.utils.ngrok import setup_ngrok
 
 
 @asynccontextmanager
@@ -16,6 +17,8 @@ async def lifespan(app: FastAPI):
         print(setup_ngrok())
     yield
     await MongoDBConnection.close_async_mongo()
+    if os.getenv("ENVIRONMENT") == "development":
+        ngrok.kill()
 
 
 app = FastAPI(lifespan=lifespan, debug=True)

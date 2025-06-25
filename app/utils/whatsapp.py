@@ -1,0 +1,49 @@
+import os
+import httpx
+
+
+async def send_response(
+    from_number: str,
+    response_text: str,
+    message_type: str = "text",
+    whatsapp_token: str = None,
+    whatsapp_phone_number_id: str = None,
+    media_content: bytes = None,
+) -> bool:
+    """Send response to user via WhatsApp API.
+
+    Args:
+        from_number: The recipient's phone number
+        response_text: The message to send
+        message_type: The type of message (default: "text")
+        whatsapp_token: The WhatsApp token for the specific bot
+        whatsapp_phone_number_id: The WhatsApp phone number ID for the specific bot
+        media_content: Binary content for media messages (default: None)
+
+    Returns:
+        bool: True if message was sent successfully, False otherwise
+    """
+    if not whatsapp_token or not whatsapp_phone_number_id:
+        return False
+
+    headers = {
+        "Authorization": f"Bearer {whatsapp_token}",
+        "Content-Type": "application/json",
+    }
+    json_data = {}
+    if message_type == "text":
+        json_data = {
+            "messaging_product": "whatsapp",
+            "to": from_number,
+            "type": "text",
+            "text": {"body": response_text},
+        }
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"https://graph.facebook.com/v22.0/{whatsapp_phone_number_id}/messages",
+            headers=headers,
+            json=json_data,
+        )
+
+    return response.status_code == 200

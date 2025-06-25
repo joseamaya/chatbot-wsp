@@ -3,12 +3,12 @@ import logging
 from langchain_core.runnables import RunnableConfig
 
 from app.ai.chains import get_memory_chain, get_character_chain
-from app.ai.state import State
+from app.ai.statebot import StateBot
 
 logger = logging.getLogger(__name__)
 
 
-async def memory_extraction_node(state: State, retriever, config: RunnableConfig):
+async def memory_extraction_node(state: StateBot, retriever, config: RunnableConfig):
     chain = get_memory_chain()
     response = await chain.ainvoke({"message": state["messages"][-1]})
     if response.is_important and retriever:
@@ -23,7 +23,7 @@ async def memory_extraction_node(state: State, retriever, config: RunnableConfig
             print(f"Error almacenando memoria: {str(e)}")
     return {}
 
-async def memory_injection_node(state: State, retriever, config: RunnableConfig):
+async def memory_injection_node(state: StateBot, retriever, config: RunnableConfig):
     if not retriever:
         return {"memory_context": ""}
     config = config.get("configurable")
@@ -40,7 +40,7 @@ async def memory_injection_node(state: State, retriever, config: RunnableConfig)
         print(f"Error recuperando memorias: {str(e)}")
         return {"memory_context": ""}
 
-async def retrieve(state: State, retriever):
+async def retrieve(state: StateBot, retriever):
     if not retriever:
         return {"context": []}
     query = state["messages"][-1]
@@ -51,10 +51,12 @@ async def retrieve(state: State, retriever):
         print(f"Error en retrieve: {str(e)}")
         return {"context": []}
 
-async def generate_response(state: State, config: RunnableConfig):
+async def generate_response(state: StateBot, config: RunnableConfig):
+    config = config.get("configurable")
+    prompt = config.get("prompt", "")
     memory_context = state.get('memory_context')
     docs_content = "\n\n".join(doc.page_content for doc in state.get("context", []))
-    chain = get_character_chain()
+    chain = get_character_chain(prompt)
     response = await chain.ainvoke(
         {
             "messages": state['messages'],

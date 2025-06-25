@@ -1,7 +1,9 @@
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pymongo import MongoClient
 from pymongo.database import Database
+from beanie import init_beanie
 from app.config.settings import get_settings
+from app.database.models.bot import Bot
 
 settings = get_settings()
 
@@ -16,6 +18,10 @@ class MongoDBConnection:
         if cls.async_client is None:
             cls.async_client = AsyncIOMotorClient(settings.MONGO_DB_URL)
             cls.async_db = cls.async_client[settings.MONGO_DB_NAME]
+            await init_beanie(
+                database=cls.async_db,
+                document_models=[Bot]
+            )
 
     @classmethod
     def connect_to_sync_mongo(cls):

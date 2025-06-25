@@ -26,11 +26,11 @@ def get_memory_chain():
     return prompt | model
 
 
-def get_character_chain():
+def get_character_chain(prompt):
     model = ChatOpenAI(model="gpt-4o", temperature=0)
     prompt = ChatPromptTemplate.from_messages(
         [
-            ("system", CHARACTER_PROMPT),
+            ("system", prompt),
             MessagesPlaceholder(variable_name="messages"),
         ]
     )

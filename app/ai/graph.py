@@ -2,13 +2,14 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.constants import START, END
 from langgraph.graph import StateGraph
 
+from app.ai.config import GraphConfig
 from app.ai.nodes import memory_extraction_node, memory_injection_node, retrieve, generate_response
 from app.ai.retrievers import get_retriever_mongodb
-from app.ai.state import State
+from app.ai.statebot import StateBot
 
 
 def create_workflow_graph():
-    graph_builder = StateGraph(State)
+    graph_builder = StateGraph(StateBot, config_schema=GraphConfig)
     graph_builder.add_edge(START, "memory_extraction_node")
     memories_retriever = get_retriever_mongodb(
         k=5,
@@ -16,10 +17,10 @@ def create_workflow_graph():
         index_name="memories-vector-index"
     )
 
-    async def call_memory_extraction(state: State, config: RunnableConfig):
+    async def call_memory_extraction(state: StateBot, config: RunnableConfig):
         return await memory_extraction_node(state, memories_retriever, config)
 
-    async def call_memory_injection(state: State, config: RunnableConfig):
+    async def call_memory_injection(state: StateBot, config: RunnableConfig):
         return await memory_injection_node(state, memories_retriever, config)
 
     graph_builder.add_node("memory_extraction_node", call_memory_extraction)
@@ -31,7 +32,7 @@ def create_workflow_graph():
         index_name="bots-vector-index"
     )
 
-    async def call_retrieve(state: State):
+    async def call_retrieve(state: StateBot):
         return await retrieve(state, rag_retriever)
 
     graph_builder.add_node("retrieve", call_retrieve)

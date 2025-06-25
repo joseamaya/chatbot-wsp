@@ -3,6 +3,8 @@ import os
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from langchain_community.document_loaders import TextLoader
 
+from app.database.models.bot import Bot
+from app.schemas.bot import BotCreate, BotResponse
 from app.ai.retrievers import get_retriever_mongodb
 from app.ai.splitters import get_narrative_splitter
 
@@ -57,3 +59,49 @@ async def upload_info(info: UploadFile = File(...)):
         return {"status": "success", "message": "Información procesada correctamente"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error en el procesamiento: {str(e)}")
+
+@bots_router.post("/", response_model=BotResponse, status_code=201)
+async def create_bot(bot_data: BotCreate):
+    """
+    Crea un nuevo bot.
+
+    Args:
+        bot_data: Datos del bot a crear
+
+    Returns:
+        BotResponse: Datos del bot creado
+
+    Raises:
+        HTTPException: Si hay error en la creación o el nombre ya existe
+    """
+    try:
+        bot = Bot(
+            name=bot_data.name,
+            prompt=bot_data.prompt,
+            whatsapp_phone_number_id=bot_data.whatsapp_phone_number_id,
+            whatsapp_token=bot_data.whatsapp_token,
+            whatsapp_verify_token=bot_data.whatsapp_verify_token
+        )
+
+        await bot.save()
+
+        return BotResponse(
+            id=str(bot.id),
+            name=bot.name,
+            prompt=bot.prompt,
+            whatsapp_phone_number_id=bot.whatsapp_phone_number_id,
+            whatsapp_verify_token=bot.whatsapp_verify_token,
+            created_at=bot.created_at,
+            updated_at=bot.updated_at,
+            is_active=bot.is_active
+        )
+    except Exception as e:
+        if "duplicate key error" in str(e).lower():
+            raise HTTPException(
+                status_code=400,
+                detail=f"Ya existe un bot con el nombre '{bot_data.name}'"
+            )
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al crear el bot: {str(e)}"
+        )
