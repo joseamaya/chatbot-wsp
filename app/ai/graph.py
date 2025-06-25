@@ -9,6 +9,12 @@ from app.ai.statebot import StateBot
 
 
 def create_workflow_graph():
+    """
+    Creates a workflow graph with all the necessary nodes and edges.
+
+    Returns:
+        StateGraph: The constructed graph before compilation
+    """
     graph_builder = StateGraph(StateBot, config_schema=GraphConfig)
     graph_builder.add_edge(START, "memory_extraction_node")
     memories_retriever = get_retriever_mongodb(
@@ -44,4 +50,3 @@ def create_workflow_graph():
     return graph_builder
 
 graph = create_workflow_graph().compile()
-

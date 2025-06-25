@@ -16,9 +16,9 @@ async def lifespan(app: FastAPI):
     if os.getenv("ENVIRONMENT") == "development":
         print(setup_ngrok())
     yield
-    await MongoDBConnection.close_async_mongo()
     if os.getenv("ENVIRONMENT") == "development":
         ngrok.kill()
+    await MongoDBConnection.close_async_mongo()
 
 
 app = FastAPI(lifespan=lifespan, debug=True)

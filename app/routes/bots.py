@@ -1,40 +1,14 @@
 import os
-
 from fastapi import APIRouter, UploadFile, File, HTTPException
-from langchain_community.document_loaders import TextLoader
 
 from app.database.models.bot import Bot
 from app.schemas.bot import BotCreate, BotResponse
-from app.ai.retrievers import get_retriever_mongodb
-from app.ai.splitters import get_narrative_splitter
+from app.utils.files import save_temp_file, process_documents
 
 bots_router = APIRouter(
     prefix="/bots",
     tags=["bots"]
 )
-
-async def save_temp_file(info_bytes: bytes, filename: str) -> str:
-    """Guarda un archivo temporal y retorna su ruta."""
-    temp_file_name = f"temp_{filename}"
-    temp_file_path = os.path.join("/tmp", temp_file_name)
-    with open(temp_file_path, "wb+") as f:
-        f.write(info_bytes)
-    return temp_file_path
-
-async def process_documents(file_path: str):
-    """Procesa los documentos y los añade al vector store."""
-    loader = TextLoader(file_path)
-    documents = loader.load()
-    splitter = get_narrative_splitter()
-    docs = splitter.split_documents(documents)
-
-    vector_store = get_retriever_mongodb(
-        k=5,
-        collection_name="bots_rag",
-        index_name="bots-vector-index"
-    ).vectorstore
-    vector_store.add_documents(documents=docs)
-
 
 @bots_router.post("/{id}/upload-info")
 async def upload_info(info: UploadFile = File(...)):
