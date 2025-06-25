@@ -1,3 +1,4 @@
 -r base.txt
 
 langgraph-cli[inmem]
+pyngrok==7.2.11
