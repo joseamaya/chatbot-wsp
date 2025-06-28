@@ -2,7 +2,6 @@ import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from pyngrok import ngrok
 
 from app.database.connection import MongoDBConnection
 from app.routes.bots import bots_router
@@ -17,6 +16,7 @@ async def lifespan(app: FastAPI):
         print(setup_ngrok())
     yield
     if os.getenv("ENVIRONMENT") == "development":
+        from pyngrok import ngrok
         ngrok.kill()
     await MongoDBConnection.close_async_mongo()
 
