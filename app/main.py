@@ -6,13 +6,13 @@ from fastapi import FastAPI
 from app.database.connection import MongoDBConnection
 from app.routes.bots import bots_router
 from app.routes.whatsapp import whatsapp_router
-from app.utils.ngrok import setup_ngrok
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await MongoDBConnection.connect_to_async_mongo()
     if os.getenv("ENVIRONMENT") == "development":
+        from app.utils.ngrok import setup_ngrok
         print(setup_ngrok())
     yield
     if os.getenv("ENVIRONMENT") == "development":
