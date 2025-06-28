@@ -13,10 +13,7 @@ class Environment(str, Enum):
 
 class Settings(BaseSettings):
     MONGO_DB_NAME: str = os.environ.get('MONGO_DB_NAME')
-    WHATSAPP_TOKEN: str = os.environ.get('WHATSAPP_TOKEN')
-    WHATSAPP_VERIFY_TOKEN: str = os.environ.get('WHATSAPP_VERIFY_TOKEN')
     WHATSAPP_API_URL: str = "https://graph.facebook.com/v17.0"
-    WHATSAPP_PHONE_NUMBER_ID: Optional[str] = None
     OPENAI_API_KEY: str = os.environ.get('OPENAI_API_KEY')
     DEBUG: bool = False
 
