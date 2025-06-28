@@ -5,11 +5,31 @@ services:
       args:
         - ENVIRONMENT=production
     container_name: chatbot-wsp-app
-    ports:
-      - "80:8000"
+    expose:
+      - "8000"
     volumes:
       - .:/app
     env_file:
       - .env
-    stdin_open: true
-    tty: true
+    networks:
+      - chatbot-network
+
+  nginx:
+    build:
+      context: ./nginx
+    container_name: chatbot-wsp-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf:/etc/nginx/conf.d
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    depends_on:
+      - app
+    networks:
+      - chatbot-network
+
+networks:
+  chatbot-network:
+    driver: bridge
