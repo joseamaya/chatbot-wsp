@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Request, Response, HTTPException
 import logging
+from datetime import datetime
 from langchain_core.messages import HumanMessage
 from langgraph.checkpoint.mongodb import AsyncMongoDBSaver
 from beanie import PydanticObjectId
@@ -8,6 +9,7 @@ from app.config.settings import get_settings
 from app.ai import graph_builder
 from app.utils.whatsapp import send_response
 from app.database.models.bot import Bot
+from app.database.models.chat import Chat
 
 whatsapp_router = APIRouter(
     prefix="/whatsapp",
@@ -56,27 +58,45 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
                 else:
                     content = message["text"]["body"]
 
-                config = {
-                    "configurable": {
-                        "thread_id": session_id,
-                        "chat_id": session_id,
-                        "prompt": bot.prompt
-                    }
-                }
-
-                async with AsyncMongoDBSaver.from_conn_string(
-                    settings.MONGO_DB_URL,
-                    db_name=settings.MONGO_DB_NAME
-                ) as checkpointer:
-                    graph = graph_builder.compile(checkpointer=checkpointer)
-
-                    await graph.ainvoke(
-                        {"messages": [HumanMessage(content=content)]},
-                        config,
+                chat = await Chat.find_one(
+                    {"phone_number": from_number, "bot.$id": PydanticObjectId(bot_id), "is_active": True}
+                )
+                if not chat:
+                    chat = Chat(
+                        phone_number=from_number,
+                        bot=bot,
+                        started_at=datetime.utcnow(),
+                        last_interaction=datetime.utcnow()
                     )
-                    output_state = await graph.aget_state(config=config)
+                    await chat.save()
+                    response_message = bot.welcome_message or "¡Hola! ¿En qué puedo ayudarte?"
 
-                response_message = output_state.values["messages"][-1].content
+                else:
+                    chat.last_interaction = datetime.utcnow()
+                    chat.messages_count += 1
+                    await chat.save()
+
+                    config = {
+                        "configurable": {
+                            "thread_id": session_id,
+                            "chat_id": session_id,
+                            "prompt": bot.prompt
+                        }
+                    }
+
+                    async with AsyncMongoDBSaver.from_conn_string(
+                        settings.MONGO_DB_URL,
+                        db_name=settings.MONGO_DB_NAME
+                    ) as checkpointer:
+                        graph = graph_builder.compile(checkpointer=checkpointer)
+
+                        await graph.ainvoke(
+                            {"messages": [HumanMessage(content=content)]},
+                            config,
+                        )
+                        output_state = await graph.aget_state(config=config)
+
+                    response_message = output_state.values["messages"][-1].content
                 success = await send_response(
                     from_number=from_number,
                     response_text=response_message,

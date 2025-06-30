@@ -4,6 +4,7 @@ from pymongo.database import Database
 from beanie import init_beanie
 from app.config.settings import get_settings
 from app.database.models.bot import Bot
+from app.database.models.chat import Chat
 
 settings = get_settings()
 
@@ -20,7 +21,7 @@ class MongoDBConnection:
             cls.async_db = cls.async_client[settings.MONGO_DB_NAME]
             await init_beanie(
                 database=cls.async_db,
-                document_models=[Bot]
+                document_models=[Bot, Chat]
             )
 
     @classmethod
