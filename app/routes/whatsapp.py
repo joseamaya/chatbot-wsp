@@ -148,9 +148,9 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
 
                     config = {
                         "configurable": {
-                            "thread_id": session_id,
-                            "chat_id": session_id,
-                            "prompt": bot.prompt
+                            "thread_id": str(chat.id),
+                            "chat_id": str(chat.id),
+                            "prompt": str(bot.prompt)
                         }
                     }
 

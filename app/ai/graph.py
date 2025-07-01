@@ -20,7 +20,8 @@ def create_workflow_graph():
     memories_retriever = get_retriever_mongodb(
         k=5,
         collection_name="memories",
-        index_name="memories-vector-index"
+        index_name="memories-vector-index",
+        filters=["chat_id"]
     )
 
     async def call_memory_extraction(state: StateBot, config: RunnableConfig):
@@ -35,7 +36,8 @@ def create_workflow_graph():
     rag_retriever = get_retriever_mongodb(
         k=5,
         collection_name="bots_rag",
-        index_name="bots-vector-index"
+        index_name="bots-vector-index",
+        filters=["bot_id"]
     )
 
     async def call_retrieve(state: StateBot):
