@@ -69,8 +69,78 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
                         last_interaction=datetime.utcnow()
                     )
                     await chat.save()
-                    response_message = bot.welcome_message or "¡Hola! ¿En qué puedo ayudarte?"
 
+                    welcome_text = bot.welcome_message or "¡Hola! ¿En qué puedo ayudarte?"
+
+                    basic_info = []
+                    if bot.business_hours:
+                        basic_info.append(f"🕒 Horario de atención: {bot.business_hours}")
+                    if bot.address:
+                        basic_info.append(f"📍 Dirección: {bot.address}")
+                    if bot.phone:
+                        basic_info.append(f"📞 Teléfono: {bot.phone}")
+
+                    first_message = welcome_text
+                    if basic_info:
+                        first_message += "\n\n" + "\n\n".join(basic_info)
+
+                    await send_response(
+                        from_number=from_number,
+                        response_text=first_message,
+                        message_type="text",
+                        whatsapp_token=bot.whatsapp_token,
+                        whatsapp_phone_number_id=bot.whatsapp_phone_number_id
+                    )
+
+                    if bot.specialties and len(bot.specialties) > 0:
+                        specialties_text = "✨ Especialidades:\n" + "\n• ".join([""] + bot.specialties)
+                        await send_response(
+                            from_number=from_number,
+                            response_text=specialties_text,
+                            message_type="text",
+                            whatsapp_token=bot.whatsapp_token,
+                            whatsapp_phone_number_id=bot.whatsapp_phone_number_id
+                        )
+
+                    if bot.payment_methods and len(bot.payment_methods) > 0:
+                        payments_text = "💳 Formas de pago:\n" + "\n• ".join([""] + bot.payment_methods)
+                        await send_response(
+                            from_number=from_number,
+                            response_text=payments_text,
+                            message_type="text",
+                            whatsapp_token=bot.whatsapp_token,
+                            whatsapp_phone_number_id=bot.whatsapp_phone_number_id
+                        )
+
+                    if bot.prices and len(bot.prices) > 0:
+                        prices_text = "💰 Precios:\n" + "\n• ".join([""] + bot.prices)
+                        await send_response(
+                            from_number=from_number,
+                            response_text=prices_text,
+                            message_type="text",
+                            whatsapp_token=bot.whatsapp_token,
+                            whatsapp_phone_number_id=bot.whatsapp_phone_number_id
+                        )
+
+                    social_media = []
+                    if bot.website:
+                        social_media.append(f"🌐 Web: {bot.website}")
+                    if bot.facebook:
+                        social_media.append(f"👥 Facebook: {bot.facebook}")
+                    if bot.instagram:
+                        social_media.append(f"📸 Instagram: {bot.instagram}")
+                    if bot.tiktok:
+                        social_media.append(f"📱 TikTok: {bot.tiktok}")
+
+                    if social_media:
+                        await send_response(
+                            from_number=from_number,
+                            response_text="📱 Redes sociales:\n" + "\n".join([""] + social_media),
+                            message_type="text",
+                            whatsapp_token=bot.whatsapp_token,
+                            whatsapp_phone_number_id=bot.whatsapp_phone_number_id
+                        )
+                    success = True
                 else:
                     chat.last_interaction = datetime.utcnow()
                     chat.messages_count += 1
@@ -97,13 +167,13 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
                         output_state = await graph.aget_state(config=config)
 
                     response_message = output_state.values["messages"][-1].content
-                success = await send_response(
-                    from_number=from_number,
-                    response_text=response_message,
-                    message_type="text",
-                    whatsapp_token=bot.whatsapp_token,
-                    whatsapp_phone_number_id=bot.whatsapp_phone_number_id
-                )
+                    success = await send_response(
+                        from_number=from_number,
+                        response_text=response_message,
+                        message_type="text",
+                        whatsapp_token=bot.whatsapp_token,
+                        whatsapp_phone_number_id=bot.whatsapp_phone_number_id
+                    )
 
                 if not success:
                     return Response(content="Failed to send message", status_code=500)
