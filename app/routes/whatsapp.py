@@ -10,7 +10,7 @@ from app.ai import graph_builder
 from app.utils.whatsapp import send_response
 from app.database.models.bot import Bot
 from app.database.models.chat import Chat
-from app.database.models.message import Message
+from app.database.models.message import Message, MessageType
 
 whatsapp_router = APIRouter(
     prefix="/whatsapp",
@@ -72,7 +72,8 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
 
                     incoming_message = Message(
                         chat=chat,
-                        content=content
+                        content=content,
+                        message_type=MessageType.USER
                     )
                     await incoming_message.save()
 
@@ -155,7 +156,8 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
                     chat.last_interaction = datetime.utcnow()
                     incoming_message = Message(
                         chat=chat,
-                        content=content
+                        content=content,
+                        message_type=MessageType.USER
                     )
                     await incoming_message.save()
                     if not chat.needs_human_support and chat.messages_count >= 10:
@@ -227,3 +229,29 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
     except Exception as e:
         logger.error(f"Error handling webhook: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@whatsapp_router.get("/chats")
+async def get_all_chats():
+    """
+    Obtiene todos los chats existentes
+    """
+    chats = await Chat.find_all().to_list()
+    return chats
+
+
+@whatsapp_router.get("/chats/{chat_id}/messages")
+async def get_chat_messages(chat_id: str):
+    """
+    Obtiene todos los mensajes de un chat específico
+    """
+    try:
+        chat_object_id = PydanticObjectId(chat_id)
+        chat = await Chat.get(chat_object_id)
+        if not chat:
+            raise HTTPException(status_code=404, detail="Chat no encontrado")
+
+        messages = await Message.find(Message.chat.id == chat_object_id).sort("+timestamp").to_list()
+        return messages
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="ID de chat inválido")
