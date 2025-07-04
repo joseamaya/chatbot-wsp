@@ -1,7 +1,6 @@
 from datetime import timedelta
 from fastapi import APIRouter, HTTPException, status, Depends
-from fastapi.security import OAuth2PasswordBearer
-from beanie import PydanticObjectId
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from app.schemas.auth import OperatorCreate, OperatorLogin, Token
 from app.database.models.operator import Operator
@@ -9,8 +8,7 @@ from app.utils.auth import (
     verify_password,
     get_password_hash,
     create_access_token,
-    ACCESS_TOKEN_EXPIRE_MINUTES,
-    get_current_operator
+    ACCESS_TOKEN_EXPIRE_MINUTES
 )
 
 auth_router = APIRouter(
@@ -49,13 +47,13 @@ async def register_operator(operator_data: OperatorCreate):
 
 
 @auth_router.post("/login", response_model=Token)
-async def login(operator_data: OperatorLogin):
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     """
     Inicia sesión de un operador
     """
     # Buscar operador por email
-    operator = await Operator.find_one({"email": operator_data.email})
-    if not operator or not verify_password(operator_data.password, operator.hashed_password):
+    operator = await Operator.find_one({"email": form_data.username})
+    if not operator or not verify_password(form_data.password, operator.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email o contraseña incorrectos",
@@ -75,4 +73,4 @@ async def login(operator_data: OperatorLogin):
         data={"sub": str(operator.id)},
         expires_delta=access_token_expires
     )
-    return Token(access_token=access_token, token_type="bearer")
+    return {"access_token": access_token, "token_type": "bearer"}
