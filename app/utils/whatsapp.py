@@ -1,14 +1,16 @@
 import os
 import httpx
 
+from app.database.models.message import Message
+
 
 async def send_response(
     from_number: str,
+    chat,
     response_text: str,
     message_type: str = "text",
     whatsapp_token: str = None,
     whatsapp_phone_number_id: str = None,
-    media_content: bytes = None,
 ) -> bool:
     """Send response to user via WhatsApp API.
 
@@ -46,4 +48,11 @@ async def send_response(
             json=json_data,
         )
 
-    return response.status_code == 200
+    result = response.status_code == 200
+    if result:
+        outgoing_message = Message(
+            chat=chat,
+            content=response_text
+        )
+        await outgoing_message.save()
+    return result

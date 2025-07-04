@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 from beanie import Document, Link
 from .bot import Bot
 
@@ -12,6 +11,7 @@ class Chat(Document):
     is_active: bool = True
     context: dict = {}
     messages_count: int = 0
+    needs_human_support: bool = False
 
     class Settings:
         name = "chats"

@@ -10,6 +10,7 @@ from app.ai import graph_builder
 from app.utils.whatsapp import send_response
 from app.database.models.bot import Bot
 from app.database.models.chat import Chat
+from app.database.models.message import Message
 
 whatsapp_router = APIRouter(
     prefix="/whatsapp",
@@ -48,7 +49,6 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
             if "messages" in change_value:
                 message = change_value["messages"][0]
                 from_number = message["from"]
-                session_id = f"{bot_id}:{from_number}"
                 content = ""
 
                 if message["type"] == "audio":
@@ -70,8 +70,13 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
                     )
                     await chat.save()
 
-                    welcome_text = bot.welcome_message or "¡Hola! ¿En qué puedo ayudarte?"
+                    incoming_message = Message(
+                        chat=chat,
+                        content=content
+                    )
+                    await incoming_message.save()
 
+                    welcome_text = bot.welcome_message or "¡Hola! ¿En qué puedo ayudarte?"
                     basic_info = []
                     if bot.business_hours:
                         basic_info.append(f"🕒 Horario de atención: {bot.business_hours}")
@@ -86,6 +91,7 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
 
                     await send_response(
                         from_number=from_number,
+                        chat=chat,
                         response_text=first_message,
                         message_type="text",
                         whatsapp_token=bot.whatsapp_token,
@@ -96,6 +102,7 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
                         specialties_text = "✨ Especialidades:\n" + "\n• ".join([""] + bot.specialties)
                         await send_response(
                             from_number=from_number,
+                            chat=chat,
                             response_text=specialties_text,
                             message_type="text",
                             whatsapp_token=bot.whatsapp_token,
@@ -106,6 +113,7 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
                         payments_text = "💳 Formas de pago:\n" + "\n• ".join([""] + bot.payment_methods)
                         await send_response(
                             from_number=from_number,
+                            chat=chat,
                             response_text=payments_text,
                             message_type="text",
                             whatsapp_token=bot.whatsapp_token,
@@ -116,6 +124,7 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
                         prices_text = "💰 Precios:\n" + "\n• ".join([""] + bot.prices)
                         await send_response(
                             from_number=from_number,
+                            chat=chat,
                             response_text=prices_text,
                             message_type="text",
                             whatsapp_token=bot.whatsapp_token,
@@ -135,6 +144,7 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
                     if social_media:
                         await send_response(
                             from_number=from_number,
+                            chat=chat,
                             response_text="📱 Redes sociales:\n" + "\n".join([""] + social_media),
                             message_type="text",
                             whatsapp_token=bot.whatsapp_token,
@@ -143,8 +153,34 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
                     success = True
                 else:
                     chat.last_interaction = datetime.utcnow()
+                    incoming_message = Message(
+                        chat=chat,
+                        content=content
+                    )
+                    await incoming_message.save()
+                    if not chat.needs_human_support and chat.messages_count >= 10:
+                        chat.messages_count = 0
                     chat.messages_count += 1
                     await chat.save()
+
+                    if chat.needs_human_support:
+                        return Response(content="Message queued for human support", status_code=200)
+
+                    if chat.messages_count > 10:
+                        chat.needs_human_support = True
+                        await chat.save()
+
+                        human_support_message = "Has alcanzado el límite de mensajes automatizados. Un asistente humano continuará atendiendo tu consulta a la brevedad. ¡Gracias por tu paciencia!"
+
+                        success = await send_response(
+                            from_number=from_number,
+                            chat=chat,
+                            response_text=human_support_message,
+                            message_type="text",
+                            whatsapp_token=bot.whatsapp_token,
+                            whatsapp_phone_number_id=bot.whatsapp_phone_number_id
+                        )
+                        return Response(content="Human support message sent", status_code=200)
 
                     config = {
                         "configurable": {
@@ -166,10 +202,11 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
                         )
                         output_state = await graph.aget_state(config=config)
 
-                    response_message = output_state.values["messages"][-1].content
+                    response_message_content = output_state.values["messages"][-1].content
                     success = await send_response(
                         from_number=from_number,
-                        response_text=response_message,
+                        chat=chat,
+                        response_text=response_message_content,
                         message_type="text",
                         whatsapp_token=bot.whatsapp_token,
                         whatsapp_phone_number_id=bot.whatsapp_phone_number_id
@@ -177,19 +214,14 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
 
                 if not success:
                     return Response(content="Failed to send message", status_code=500)
-
                 return Response(content="Message processed", status_code=200)
-
             elif "statuses" in change_value:
                 return Response(content="Status update received", status_code=200)
-
             else:
                 return Response(content="Unknown event type", status_code=400)
-
         except Exception as e:
             logger.error(f"Error processing message: {e}", exc_info=True)
             return Response(content="Internal server error", status_code=500)
-
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid bot ID format")
     except Exception as e:
