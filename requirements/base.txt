@@ -12,3 +12,5 @@ pymongo==4.12.1
 python-dotenv==1.1.0
 python-multipart==0.0.20
 uvicorn==0.34.3
+PyJWT==2.10.1
+passlib[bcrypt]==1.7.4

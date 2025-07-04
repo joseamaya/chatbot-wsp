@@ -1,9 +1,11 @@
 import os
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 
 from app.database.models.bot import Bot
+from app.database.models.operator import Operator
 from app.schemas.bot import BotCreate, BotResponse
 from app.utils.files import save_temp_file, process_documents
+from app.utils.auth import get_current_operator
 
 bots_router = APIRouter(
     prefix="/bots",
@@ -11,12 +13,18 @@ bots_router = APIRouter(
 )
 
 @bots_router.post("/{id}/upload-info")
-async def upload_info(info: UploadFile = File(...)):
+async def upload_info(
+    id: str,
+    info: UploadFile = File(...),
+    current_operator: Operator = Depends(get_current_operator)
+):
     """
     Sube información para el bot y la procesa para RAG.
 
     Args:
+        id: ID del bot
         info: Archivo a procesar
+        current_operator: Operador autenticado (inyectado automáticamente)
 
     Returns:
         dict: Información del resultado
@@ -35,12 +43,16 @@ async def upload_info(info: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Error en el procesamiento: {str(e)}")
 
 @bots_router.post("/", response_model=BotResponse, status_code=201)
-async def create_bot(bot_data: BotCreate):
+async def create_bot(
+    bot_data: BotCreate,
+    current_operator: Operator = Depends(get_current_operator)
+):
     """
     Crea un nuevo bot.
 
     Args:
         bot_data: Datos del bot a crear
+        current_operator: Operador autenticado (inyectado automáticamente)
 
     Returns:
         BotResponse: Datos del bot creado

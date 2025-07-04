@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Response, HTTPException
+from fastapi import APIRouter, Request, Response, HTTPException, Body, Depends
 import logging
 from datetime import datetime
 from langchain_core.messages import HumanMessage
@@ -8,9 +8,11 @@ from beanie import PydanticObjectId
 from app.config.settings import get_settings
 from app.ai import graph_builder
 from app.utils.whatsapp import send_response
+from app.utils.auth import get_current_operator
 from app.database.models.bot import Bot
 from app.database.models.chat import Chat
 from app.database.models.message import Message, MessageType
+from app.database.models.operator import Operator
 
 whatsapp_router = APIRouter(
     prefix="/whatsapp",
@@ -232,18 +234,25 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
 
 
 @whatsapp_router.get("/chats")
-async def get_all_chats():
+async def get_all_chats(
+    current_operator: Operator = Depends(get_current_operator)
+):
     """
-    Obtiene todos los chats existentes
+    Obtiene todos los chats existentes.
+    Requiere autenticación del operador.
     """
     chats = await Chat.find_all().to_list()
     return chats
 
 
 @whatsapp_router.get("/chats/{chat_id}/messages")
-async def get_chat_messages(chat_id: str):
+async def get_chat_messages(
+    chat_id: str,
+    current_operator: Operator = Depends(get_current_operator)
+):
     """
-    Obtiene todos los mensajes de un chat específico
+    Obtiene todos los mensajes de un chat específico.
+    Requiere autenticación del operador.
     """
     try:
         chat_object_id = PydanticObjectId(chat_id)
@@ -255,3 +264,44 @@ async def get_chat_messages(chat_id: str):
         return messages
     except Exception as e:
         raise HTTPException(status_code=400, detail="ID de chat inválido")
+
+
+@whatsapp_router.post("/chats/{chat_id}/human-reply")
+async def send_human_reply(
+    chat_id: str,
+    message: str = Body(..., description="Mensaje a enviar al usuario"),
+    current_operator: Operator = Depends(get_current_operator)
+):
+    """
+    Envía un mensaje como operador humano a un chat específico.
+    Requiere autenticación del operador.
+    """
+    try:
+        chat_object_id = PydanticObjectId(chat_id)
+        chat = await Chat.get(chat_object_id)
+        if not chat:
+            raise HTTPException(status_code=404, detail="Chat no encontrado")
+
+        # Obtener el bot asociado al chat para sus credenciales
+        bot = chat.bot
+
+        success = await send_response(
+            from_number=chat.phone_number,
+            chat=chat,
+            response_text=message,
+            message_type="text",
+            whatsapp_token=bot.whatsapp_token,
+            whatsapp_phone_number_id=bot.whatsapp_phone_number_id,
+            is_human=True,
+            sender_id=str(current_operator.id)
+        )
+
+        if not success:
+            raise HTTPException(status_code=500, detail="Error al enviar el mensaje")
+
+        return {"status": "success", "message": "Mensaje enviado correctamente"}
+    except ValueError:
+        raise HTTPException(status_code=400, detail="ID de chat inválido")
+    except Exception as e:
+        logger.error(f"Error sending human reply: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Error interno del servidor")

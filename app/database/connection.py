@@ -6,6 +6,7 @@ from app.config.settings import get_settings
 from app.database.models.bot import Bot
 from app.database.models.chat import Chat
 from app.database.models.message import Message
+from app.database.models.operator import Operator
 
 settings = get_settings()
 
@@ -22,7 +23,7 @@ class MongoDBConnection:
             cls.async_db = cls.async_client[settings.MONGO_DB_NAME]
             await init_beanie(
                 database=cls.async_db,
-                document_models=[Bot, Chat, Message]
+                document_models=[Bot, Chat, Message, Operator]
             )
 
     @classmethod
