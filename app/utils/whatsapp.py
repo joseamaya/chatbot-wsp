@@ -2,6 +2,7 @@ import os
 import httpx
 
 from app.database.models.message import Message
+from app.database.models.message import MessageType
 
 
 async def send_response(
@@ -11,6 +12,8 @@ async def send_response(
     message_type: str = "text",
     whatsapp_token: str = None,
     whatsapp_phone_number_id: str = None,
+    is_human: bool = False,
+    sender_id: str | None = None
 ) -> bool:
     """Send response to user via WhatsApp API.
 
@@ -52,7 +55,9 @@ async def send_response(
     if result:
         outgoing_message = Message(
             chat=chat,
-            content=response_text
+            content=response_text,
+            message_type=MessageType.HUMAN if is_human else MessageType.AI,
+            sender_id=sender_id if is_human else None
         )
         await outgoing_message.save()
     return result
