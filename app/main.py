@@ -2,18 +2,14 @@ import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from beanie import init_beanie
-from motor.motor_asyncio import AsyncIOMotorClient
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.config.settings import get_settings
 from app.database.connection import MongoDBConnection
-from app.database.models.bot import Bot
-from app.database.models.chat import Chat
-from app.database.models.message import Message
-from app.database.models.operator import Operator
 from app.routes.bots import bots_router
 from app.routes.whatsapp import whatsapp_router
 from app.routes.auth import auth_router
+from app.routes.websocket import websocket_router
 
 
 @asynccontextmanager
@@ -33,16 +29,20 @@ settings = get_settings()
 
 app = FastAPI(lifespan=lifespan, debug=True)
 
-
-@app.on_event("startup")
-async def startup_event():
-    client = AsyncIOMotorClient(settings.MONGO_DB_URL)
-    await init_beanie(
-        database=client[settings.MONGO_DB_NAME],
-        document_models=[Bot, Chat, Message, Operator]
-    )
+# Configuración de CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:8080",
+        "https://chatbot-wsp-q6j0.onrender.com"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 app.include_router(whatsapp_router)
 app.include_router(bots_router)
 app.include_router(auth_router)
+app.include_router(websocket_router)

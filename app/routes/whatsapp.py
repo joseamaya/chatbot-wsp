@@ -9,6 +9,7 @@ from app.config.settings import get_settings
 from app.ai import graph_builder
 from app.utils.whatsapp import send_response
 from app.utils.auth import get_current_operator
+from app.utils.websocket import connection_manager
 from app.database.models.bot import Bot
 from app.database.models.chat import Chat
 from app.database.models.message import Message, MessageType
@@ -168,6 +169,25 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
                     await chat.save()
 
                     if chat.needs_human_support:
+                        # Notificar a los operadores sobre el nuevo mensaje en un chat que requiere soporte humano
+                        notification_message = {
+                            "type": "new_message",
+                            "chat_id": str(chat.id),
+                            "phone_number": from_number,
+                            "message": content,
+                            "timestamp": datetime.utcnow().isoformat(),
+                            "bot_id": str(bot.id),
+                            "bot_name": bot.name
+                        }
+
+                        # Obtenemos todos los operadores activos y les enviamos la notificación
+                        operators = await Operator.find({"is_active": True}).to_list()
+                        for operator in operators:
+                            await connection_manager.broadcast_to_operator(
+                                notification_message,
+                                str(operator.id)
+                            )
+
                         return Response(content="Message queued for human support", status_code=200)
 
                     if chat.messages_count > 10:
