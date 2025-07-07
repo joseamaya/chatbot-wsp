@@ -34,7 +34,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:8080",
-        "https://chatbot-wsp-q6j0.onrender.com"
+        "https://chatbot-board.lovable.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
