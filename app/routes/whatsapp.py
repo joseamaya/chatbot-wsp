@@ -80,6 +80,9 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
                     )
                     await incoming_message.save()
 
+                    chat.messages_count += 1
+                    await chat.save()
+
                     welcome_text = bot.welcome_message or "¡Hola! ¿En qué puedo ayudarte?"
                     basic_info = []
                     if bot.business_hours:
