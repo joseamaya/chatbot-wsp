@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Response, HTTPException, Body, Depends
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from langchain_core.messages import HumanMessage
 from langgraph.checkpoint.mongodb import AsyncMongoDBSaver
 from beanie import PydanticObjectId
@@ -68,8 +68,8 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
                     chat = Chat(
                         phone_number=from_number,
                         bot=bot,
-                        started_at=datetime.utcnow(),
-                        last_interaction=datetime.utcnow()
+                        started_at=datetime.now(UTC),
+                        last_interaction=datetime.now(UTC)
                     )
                     await chat.save()
 
@@ -159,7 +159,7 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
                         )
                     success = True
                 else:
-                    chat.last_interaction = datetime.utcnow()
+                    chat.last_interaction = datetime.now(UTC)
                     incoming_message = Message(
                         chat=chat,
                         content=content,
@@ -178,7 +178,7 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
                             "chat_id": str(chat.id),
                             "phone_number": from_number,
                             "message": content,
-                            "timestamp": datetime.utcnow().isoformat(),
+                            "timestamp": datetime.now(UTC).isoformat(),
                             "bot_id": str(bot.id),
                             "bot_name": bot.name
                         }
@@ -306,7 +306,7 @@ async def send_human_reply(
             raise HTTPException(status_code=404, detail="Chat no encontrado")
 
         # Obtener el bot asociado al chat para sus credenciales
-        bot = chat.bot
+        bot = await chat.bot.fetch()
 
         success = await send_response(
             from_number=chat.phone_number,
