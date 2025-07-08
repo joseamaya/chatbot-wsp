@@ -34,7 +34,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:8080",
-        "https://chatbot-board.lovable.app"
+        "https://chatbot-board.lovable.app",
+        "https://id-preview--d74ae125-57fe-4335-afb5-1af5dd30ea49.lovable.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
