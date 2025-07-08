@@ -1,6 +1,7 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from beanie import Document, Link
+from pydantic import Field
 from .chat import Chat
 
 
@@ -13,9 +14,9 @@ class MessageType(str, Enum):
 class Message(Document):
     chat: Link[Chat]
     content: str
-    timestamp: datetime = datetime.utcnow()
-    message_type: MessageType = MessageType.USER  # Por defecto es mensaje de usuario
-    sender_id: str | None = None  # ID del operador humano si message_type es HUMAN
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    message_type: MessageType = MessageType.USER
+    sender_id: str | None = None
 
     class Settings:
         name = "messages"

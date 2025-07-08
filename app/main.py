@@ -35,7 +35,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:8080",
         "https://chatbot-board.lovable.app",
-        "https://id-preview--d74ae125-57fe-4335-afb5-1af5dd30ea49.lovable.app"
+        "https://id-preview--d74ae125-57fe-4335-afb5-1af5dd30ea49.lovable.app",
+        "https://d74ae125-57fe-4335-afb5-1af5dd30ea49.lovableproject.com"
     ],
     allow_credentials=True,
     allow_methods=["*"],
