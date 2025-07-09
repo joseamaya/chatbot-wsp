@@ -190,7 +190,7 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
 
                         return Response(content="Message queued for human support", status_code=200)
 
-                    if chat.messages_count > 10:
+                    if chat.messages_count == 10:
                         chat.needs_human_support = True
                         await chat.save()
 
