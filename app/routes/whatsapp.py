@@ -166,13 +166,11 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
                         message_type=MessageType.USER
                     )
                     await incoming_message.save()
-                    if not chat.needs_human_support and chat.messages_count >= 10:
-                        chat.messages_count = 0
+
                     chat.messages_count += 1
                     await chat.save()
 
                     if chat.needs_human_support:
-                        # Notificar a los operadores sobre el nuevo mensaje en un chat que requiere soporte humano
                         notification_message = {
                             "type": "new_message",
                             "chat_id": str(chat.id),
@@ -183,7 +181,6 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
                             "bot_name": bot.name
                         }
 
-                        # Obtenemos todos los operadores activos y les enviamos la notificación
                         operators = await Operator.find({"is_active": True}).to_list()
                         for operator in operators:
                             await connection_manager.broadcast_to_operator(
@@ -207,8 +204,28 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
                             whatsapp_token=bot.whatsapp_token,
                             whatsapp_phone_number_id=bot.whatsapp_phone_number_id
                         )
+
+                        # Enviar notificación a operadores después de enviar el mensaje al usuario
+                        notification_message = {
+                            "type": "new_message",
+                            "chat_id": str(chat.id),
+                            "phone_number": from_number,
+                            "message": content,
+                            "timestamp": datetime.now(UTC).isoformat(),
+                            "bot_id": str(bot.id),
+                            "bot_name": bot.name
+                        }
+
+                        operators = await Operator.find({"is_active": True}).to_list()
+                        for operator in operators:
+                            await connection_manager.broadcast_to_operator(
+                                notification_message,
+                                str(operator.id)
+                            )
+
                         return Response(content="Human support message sent", status_code=200)
 
+                    # Si no necesita soporte humano, procesar con IA
                     config = {
                         "configurable": {
                             "thread_id": str(chat.id),
@@ -327,4 +344,33 @@ async def send_human_reply(
         raise HTTPException(status_code=400, detail="ID de chat inválido")
     except Exception as e:
         logger.error(f"Error sending human reply: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
+
+
+@whatsapp_router.post("/chats/{chat_id}/close-human-support")
+async def close_human_support(
+    chat_id: str,
+    current_operator: Operator = Depends(get_current_operator)
+):
+    """
+    Cierra el soporte humano para un chat específico y devuelve el control a la IA.
+    Resetea el contador de mensajes y desactiva la bandera needs_human_support.
+    Requiere autenticación del operador.
+    """
+    try:
+        chat_object_id = PydanticObjectId(chat_id)
+        chat = await Chat.get(chat_object_id)
+        if not chat:
+            raise HTTPException(status_code=404, detail="Chat no encontrado")
+
+        # Resetear el contador de mensajes y desactivar soporte humano
+        chat.needs_human_support = False
+        chat.messages_count = 0
+        await chat.save()
+
+        return {"status": "success", "message": "Soporte humano cerrado. El control ha sido devuelto a la IA."}
+    except ValueError:
+        raise HTTPException(status_code=400, detail="ID de chat inválido")
+    except Exception as e:
+        logger.error(f"Error closing human support: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error interno del servidor")
