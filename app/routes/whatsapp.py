@@ -225,7 +225,6 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
 
                         return Response(content="Human support message sent", status_code=200)
 
-                    # Si no necesita soporte humano, procesar con IA
                     config = {
                         "configurable": {
                             "thread_id": str(chat.id),
@@ -246,6 +245,39 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
                         )
                         output_state = await graph.aget_state(config=config)
 
+                    intention = output_state.values.get("intention", "continue_bot")
+                    if intention == "needs_human":
+                        chat.needs_human_support = True
+                        await chat.save()
+
+                        human_support_message = "Un asistente humano continuará atendiendo tu consulta a la brevedad. ¡Gracias por tu paciencia!"
+
+                        success = await send_response(
+                            from_number=from_number,
+                            chat=chat,
+                            response_text=human_support_message,
+                            message_type="text",
+                            whatsapp_token=bot.whatsapp_token,
+                            whatsapp_phone_number_id=bot.whatsapp_phone_number_id
+                        )
+
+                        notification_message = {
+                            "type": "new_message",
+                            "chat_id": str(chat.id),
+                            "phone_number": from_number,
+                            "message": content,
+                            "timestamp": datetime.now(UTC).isoformat(),
+                            "bot_id": str(bot.id),
+                            "bot_name": bot.name
+                        }
+
+                        operators = await Operator.find({"is_active": True}).to_list()
+                        for operator in operators:
+                            await connection_manager.broadcast_to_operator(
+                                notification_message,
+                                str(operator.id)
+                            )
+                        return Response(content="Human support message sent", status_code=200)
                     response_message_content = output_state.values["messages"][-1].content
                     success = await send_response(
                         from_number=from_number,
