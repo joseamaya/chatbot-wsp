@@ -2,8 +2,8 @@ import logging
 
 from langchain_core.runnables import RunnableConfig
 
-from app.ai.chains import get_memory_chain, get_character_chain
-from app.ai.statebot import StateBot
+from app.ai.chains import get_memory_chain, get_character_chain, get_intention_chain
+from app.ai.state import StateBot
 
 logger = logging.getLogger(__name__)
 
@@ -66,3 +66,8 @@ async def generate_response(state: StateBot, config: RunnableConfig):
         config,
     )
     return {"answer": response.content, "messages": response}
+
+async def get_intention(state: StateBot):
+    chain = get_intention_chain()
+    response = await chain.ainvoke({"input": state["messages"][-1]})
+    return {"intention": response.content}

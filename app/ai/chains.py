@@ -4,7 +4,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
-from app.ai.prompts import MEMORY_ANALYSIS_PROMPT, CHARACTER_PROMPT
+from app.ai.prompts import MEMORY_ANALYSIS_PROMPT, INTENTION_PROMPT
 
 
 class MemoryAnalysis(BaseModel):
@@ -34,4 +34,10 @@ def get_character_chain(prompt):
             MessagesPlaceholder(variable_name="messages"),
         ]
     )
+    return prompt | model
+
+
+def get_intention_chain():
+    model = ChatOpenAI(model="gpt-4o", temperature=0)
+    prompt = ChatPromptTemplate.from_template(INTENTION_PROMPT)
     return prompt | model

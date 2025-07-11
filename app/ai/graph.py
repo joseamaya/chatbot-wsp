@@ -3,9 +3,10 @@ from langgraph.constants import START, END
 from langgraph.graph import StateGraph
 
 from app.ai.config import GraphConfig
-from app.ai.nodes import memory_extraction_node, memory_injection_node, retrieve, generate_response
+from app.ai.edges import need_human_attention
+from app.ai.nodes import memory_extraction_node, memory_injection_node, retrieve, generate_response, get_intention
 from app.ai.retrievers import get_retriever_mongodb
-from app.ai.statebot import StateBot
+from app.ai.state import StateBot
 
 
 def create_workflow_graph():
@@ -16,7 +17,6 @@ def create_workflow_graph():
         StateGraph: The constructed graph before compilation
     """
     graph_builder = StateGraph(StateBot, config_schema=GraphConfig)
-    graph_builder.add_edge(START, "memory_extraction_node")
     memories_retriever = get_retriever_mongodb(
         k=5,
         collection_name="memories",
@@ -31,6 +31,7 @@ def create_workflow_graph():
         return await memory_injection_node(state, memories_retriever, config)
 
     graph_builder.add_node("memory_extraction_node", call_memory_extraction)
+    graph_builder.add_node("get_intention", get_intention)
     graph_builder.add_node("memory_injection_node", call_memory_injection)
 
     rag_retriever = get_retriever_mongodb(
@@ -45,7 +46,10 @@ def create_workflow_graph():
 
     graph_builder.add_node("retrieve", call_retrieve)
     graph_builder.add_node("generate_response", generate_response)
-    graph_builder.add_edge("memory_extraction_node", "memory_injection_node")
+
+    graph_builder.add_edge(START, "memory_extraction_node")
+    graph_builder.add_edge("memory_extraction_node", "get_intention")
+    graph_builder.add_conditional_edges("get_intention", need_human_attention)
     graph_builder.add_edge("memory_injection_node", "retrieve")
     graph_builder.add_edge("retrieve", "generate_response")
     graph_builder.add_edge("generate_response", END)

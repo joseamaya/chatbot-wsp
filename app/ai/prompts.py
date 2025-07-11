@@ -1,44 +1,68 @@
-CHARACTER_PROMPT = """
-Estás a punto de actuar como asistente virtual del Consultorio Integral de la Mujer.
-Tu tarea es brindar una atención profesional, empática y eficiente a todas las pacientes.
+INTENTION_PROMPT = """Analiza el mensaje del usuario para determinar si está solicitando hablar con un asistente humano o si expresa frustración que requiera intervención humana.
 
-# Contexto del rol
+Detecta las siguientes intenciones:
+1. Solicitud directa de asistente humano
+2. Expresión de frustración con el bot
+3. Problemas complejos que requieren atención personalizada
+4. Solicitudes de escalamiento o supervisión
+5. Insatisfacción con las respuestas automatizadas
 
-## Perfil de la Asistente Sofía
+Ejemplos de solicitud de asistente humano:
+- "Quiero hablar con una persona"
+- "¿Puedo hablar con alguien?"
+- "Necesito hablar con un humano"
+- "¿Hay algún operador disponible?"
+- "Quiero que me atienda una persona real"
+- "¿Puedes transferirme con alguien?"
+- "Necesito ayuda de verdad"
+- "¿Hay alguien ahí?"
+- "Quiero hablar con atención al cliente"
+- "¿Puedo hablar con un representante?"
 
-Como Sofía, eres la asistente principal del Consultorio Integral de la Mujer.
-Tienes experiencia en atención al cliente en el sector salud y especialmente en salud femenina.
-Tu prioridad es hacer que las pacientes se sientan cómodas y bien atendidas desde el primer contacto.
+Ejemplos de frustración que requiere escalamiento:
+- "No entiendes lo que necesito"
+- "Esto no me sirve"
+- "No me estás ayudando"
+- "Eres inútil"
+- "No sabes nada"
+- "Esto es frustrante"
+- "No funciona nada"
+- "Ya intenté eso y no funciona"
+- "Esto es muy complicado"
+- "No puedo resolver mi problema"
 
-# Personalidad y Comportamiento
-- Eres profesional pero cálida en tu trato
-- Muestras empatía y comprensión hacia las pacientes
-- Te expresas de manera clara y respetuosa
-- Manejas información sensible con total discreción
-- Eres eficiente en la gestión de consultas
+Ejemplos de problemas complejos:
+- "Tengo un problema muy específico"
+- "Mi caso es diferente"
+- "Necesito una solución personalizada"
+- "Es muy urgente"
+- "Es una emergencia"
+- "Tengo una queja formal"
+- "Quiero hacer un reclamo"
+- "Necesito hablar con el supervisor"
 
-# Flujo de Conversación Principal
+Ejemplos que NO requieren asistente humano:
+- "Hola, ¿cómo estás?"
+- "¿Qué servicios ofrecen?"
+- "¿Cuál es el precio?"
+- "¿Dónde están ubicados?"
+- "Gracias por la información"
+- "¿Tienen horarios de atención?"
+- "¿Aceptan tarjetas?"
+- "Quiero conocer más sobre el producto"
 
-1. Saludo inicial:
-"Buenos días, bienvenida al Consultorio Integral de la Mujer. Le atiende Sofía, estoy aquí para ayudarle. ¿Me podría indicar su nombre?"
+Reglas:
+1. Si detectas una solicitud clara de asistente humano, responde únicamente: needs_human
+2. Si hay frustración evidente o problemas complejos, responde únicamente: needs_human
+3. Si es una consulta normal que el bot puede manejar, responde únicamente: continue_bot
+4. Considera el contexto y tono del mensaje
+5. Palabras clave como "persona", "humano", "operador", "representante" suelen indicar necesidad de escalamiento
 
-2. Identificación:
-"¿Ya se ha atendido aquí anteriormente o es primera vez?"
 
-3. Según el caso:
-- Primera vez: "Somos un equipo médico ginecológico comprometido con la atención integral de la salud femenina. ¿En qué podemos ayudarle?"
-- Paciente recurrente: Proceder con la programación de cita
+Mensaje del usuario: {input}
 
-# Reglas de Atención
-- Usar la información del sistema de recuperación para responder preguntas específicas sobre servicios, ubicación, horarios, etc.
-- Mantener confidencialidad absoluta
-- Priorizar urgencias médicas
-- Verificar siempre los datos de la paciente
-- Respuestas concisas y claras
+Respuesta:"""
 
-Usa la siguiente información solo si el usuario pregunta algo sobre el consultorio.
-{context}
-"""
 
 MEMORY_ANALYSIS_PROMPT = """Extraiga y formatee datos personales importantes del usuario a partir de su mensaje.
 Céntrese en la información real, no en metacomentarios ni solicitudes.
