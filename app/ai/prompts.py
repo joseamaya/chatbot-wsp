@@ -3,7 +3,6 @@ INTENTION_PROMPT = """Analiza el mensaje del usuario para determinar si está so
 Detecta las siguientes intenciones:
 1. Solicitud directa de asistente humano
 2. Expresión de frustración con el bot
-3. Problemas complejos que requieren atención personalizada
 4. Solicitudes de escalamiento o supervisión
 5. Insatisfacción con las respuestas automatizadas
 
@@ -12,12 +11,6 @@ Ejemplos de solicitud de asistente humano:
 - "¿Puedo hablar con alguien?"
 - "Necesito hablar con un humano"
 - "¿Hay algún operador disponible?"
-- "Quiero que me atienda una persona real"
-- "¿Puedes transferirme con alguien?"
-- "Necesito ayuda de verdad"
-- "¿Hay alguien ahí?"
-- "Quiero hablar con atención al cliente"
-- "¿Puedo hablar con un representante?"
 
 Ejemplos de frustración que requiere escalamiento:
 - "No entiendes lo que necesito"
@@ -31,33 +24,17 @@ Ejemplos de frustración que requiere escalamiento:
 - "Esto es muy complicado"
 - "No puedo resolver mi problema"
 
-Ejemplos de problemas complejos:
-- "Tengo un problema muy específico"
-- "Mi caso es diferente"
-- "Necesito una solución personalizada"
-- "Es muy urgente"
-- "Es una emergencia"
-- "Tengo una queja formal"
-- "Quiero hacer un reclamo"
-- "Necesito hablar con el supervisor"
-
 Ejemplos que NO requieren asistente humano:
 - "Hola, ¿cómo estás?"
 - "¿Qué servicios ofrecen?"
 - "¿Cuál es el precio?"
 - "¿Dónde están ubicados?"
-- "Gracias por la información"
-- "¿Tienen horarios de atención?"
-- "¿Aceptan tarjetas?"
-- "Quiero conocer más sobre el producto"
 
 Reglas:
 1. Si detectas una solicitud clara de asistente humano, responde únicamente: needs_human
-2. Si hay frustración evidente o problemas complejos, responde únicamente: needs_human
 3. Si es una consulta normal que el bot puede manejar, responde únicamente: continue_bot
 4. Considera el contexto y tono del mensaje
 5. Palabras clave como "persona", "humano", "operador", "representante" suelen indicar necesidad de escalamiento
-
 
 Mensaje del usuario: {input}
 
