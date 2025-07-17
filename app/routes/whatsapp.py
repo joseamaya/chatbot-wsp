@@ -84,6 +84,24 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
                     await chat.save()
 
                     welcome_text = bot.welcome_message or "¡Hola! ¿En qué puedo ayudarte?"
+                    if bot.specialties and len(bot.specialties) > 0:
+                        welcome_text += "\n\n✨ Especialidades:\n" + "\n• ".join([""] + bot.specialties)
+
+                    try:
+                        success = await send_response(
+                            from_number=from_number,
+                            chat=chat,
+                            response_text=welcome_text,
+                            message_type="text",
+                            whatsapp_token=bot.whatsapp_token,
+                            whatsapp_phone_number_id=bot.whatsapp_phone_number_id
+                        )
+                        if not success:
+                            logger.error(f"Failed to send welcome message to {from_number}")
+                    except Exception as e:
+                        logger.error(f"Error sending welcome message to {from_number}: {e}", exc_info=True)
+                        success = False
+
                     basic_info = []
                     if bot.business_hours:
                         basic_info.append(f"🕒 Horario de atención: {bot.business_hours}")
@@ -92,71 +110,33 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
                     if bot.phone:
                         basic_info.append(f"📞 Teléfono: {bot.phone}")
 
-                    first_message = welcome_text
                     if basic_info:
-                        first_message += "\n\n" + "\n\n".join(basic_info)
+                        basic_info_text = "\n".join(basic_info)
+                        try:
+                            await send_response(
+                                from_number=from_number,
+                                chat=chat,
+                                response_text=basic_info_text,
+                                message_type="text",
+                                whatsapp_token=bot.whatsapp_token,
+                                whatsapp_phone_number_id=bot.whatsapp_phone_number_id
+                            )
+                        except Exception as e:
+                            logger.error(f"Error sending basic info message to {from_number}: {e}", exc_info=True)
+                            success = False
 
-                    await send_response(
-                        from_number=from_number,
-                        chat=chat,
-                        response_text=first_message,
-                        message_type="text",
-                        whatsapp_token=bot.whatsapp_token,
-                        whatsapp_phone_number_id=bot.whatsapp_phone_number_id
-                    )
-
-                    if bot.specialties and len(bot.specialties) > 0:
-                        specialties_text = "✨ Especialidades:\n" + "\n• ".join([""] + bot.specialties)
+                    try:
                         await send_response(
                             from_number=from_number,
                             chat=chat,
-                            response_text=specialties_text,
+                            response_text="¿Cuál es tu nombre?",
                             message_type="text",
                             whatsapp_token=bot.whatsapp_token,
                             whatsapp_phone_number_id=bot.whatsapp_phone_number_id
                         )
+                    except Exception as e:
+                        logger.error(f"Error sending name request message to {from_number}: {e}", exc_info=True)
 
-                    if bot.payment_methods and len(bot.payment_methods) > 0:
-                        payments_text = "💳 Formas de pago:\n" + "\n• ".join([""] + bot.payment_methods)
-                        await send_response(
-                            from_number=from_number,
-                            chat=chat,
-                            response_text=payments_text,
-                            message_type="text",
-                            whatsapp_token=bot.whatsapp_token,
-                            whatsapp_phone_number_id=bot.whatsapp_phone_number_id
-                        )
-
-                    if bot.prices and len(bot.prices) > 0:
-                        prices_text = "💰 Precios:\n" + "\n• ".join([""] + bot.prices)
-                        await send_response(
-                            from_number=from_number,
-                            chat=chat,
-                            response_text=prices_text,
-                            message_type="text",
-                            whatsapp_token=bot.whatsapp_token,
-                            whatsapp_phone_number_id=bot.whatsapp_phone_number_id
-                        )
-
-                    social_media = []
-                    if bot.website:
-                        social_media.append(f"🌐 Web: {bot.website}")
-                    if bot.facebook:
-                        social_media.append(f"👥 Facebook: {bot.facebook}")
-                    if bot.instagram:
-                        social_media.append(f"📸 Instagram: {bot.instagram}")
-                    if bot.tiktok:
-                        social_media.append(f"📱 TikTok: {bot.tiktok}")
-
-                    if social_media:
-                        await send_response(
-                            from_number=from_number,
-                            chat=chat,
-                            response_text="📱 Redes sociales:\n" + "\n".join([""] + social_media),
-                            message_type="text",
-                            whatsapp_token=bot.whatsapp_token,
-                            whatsapp_phone_number_id=bot.whatsapp_phone_number_id
-                        )
                     success = True
                 else:
                     chat.last_interaction = datetime.now(UTC)
@@ -196,14 +176,20 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
 
                         human_support_message = "Has alcanzado el límite de mensajes automatizados. Un asistente humano continuará atendiendo tu consulta a la brevedad. ¡Gracias por tu paciencia!"
 
-                        success = await send_response(
-                            from_number=from_number,
-                            chat=chat,
-                            response_text=human_support_message,
-                            message_type="text",
-                            whatsapp_token=bot.whatsapp_token,
-                            whatsapp_phone_number_id=bot.whatsapp_phone_number_id
-                        )
+                        try:
+                            success = await send_response(
+                                from_number=from_number,
+                                chat=chat,
+                                response_text=human_support_message,
+                                message_type="text",
+                                whatsapp_token=bot.whatsapp_token,
+                                whatsapp_phone_number_id=bot.whatsapp_phone_number_id
+                            )
+                            if not success:
+                                logger.error(f"Failed to send human support limit message to {from_number}")
+                        except Exception as e:
+                            logger.error(f"Error sending human support limit message to {from_number}: {e}", exc_info=True)
+                            success = False
 
                         # Enviar notificación a operadores después de enviar el mensaje al usuario
                         notification_message = {
@@ -218,10 +204,13 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
 
                         operators = await Operator.find({"is_active": True}).to_list()
                         for operator in operators:
-                            await connection_manager.broadcast_to_operator(
-                                notification_message,
-                                str(operator.id)
-                            )
+                            try:
+                                await connection_manager.broadcast_to_operator(
+                                    notification_message,
+                                    str(operator.id)
+                                )
+                            except Exception as e:
+                                logger.error(f"Error broadcasting to operator {operator.id}: {e}", exc_info=True)
 
                         return Response(content="Human support message sent", status_code=200)
 
@@ -252,14 +241,20 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
 
                         human_support_message = "Un asistente humano continuará atendiendo tu consulta a la brevedad. ¡Gracias por tu paciencia!"
 
-                        success = await send_response(
-                            from_number=from_number,
-                            chat=chat,
-                            response_text=human_support_message,
-                            message_type="text",
-                            whatsapp_token=bot.whatsapp_token,
-                            whatsapp_phone_number_id=bot.whatsapp_phone_number_id
-                        )
+                        try:
+                            success = await send_response(
+                                from_number=from_number,
+                                chat=chat,
+                                response_text=human_support_message,
+                                message_type="text",
+                                whatsapp_token=bot.whatsapp_token,
+                                whatsapp_phone_number_id=bot.whatsapp_phone_number_id
+                            )
+                            if not success:
+                                logger.error(f"Failed to send human support request message to {from_number}")
+                        except Exception as e:
+                            logger.error(f"Error sending human support request message to {from_number}: {e}", exc_info=True)
+                            success = False
 
                         notification_message = {
                             "type": "new_message",
@@ -273,20 +268,30 @@ async def whatsapp_handler(bot_id: str, request: Request) -> Response:
 
                         operators = await Operator.find({"is_active": True}).to_list()
                         for operator in operators:
-                            await connection_manager.broadcast_to_operator(
-                                notification_message,
-                                str(operator.id)
-                            )
+                            try:
+                                await connection_manager.broadcast_to_operator(
+                                    notification_message,
+                                    str(operator.id)
+                                )
+                            except Exception as e:
+                                logger.error(f"Error broadcasting to operator {operator.id}: {e}", exc_info=True)
                         return Response(content="Human support message sent", status_code=200)
+
                     response_message_content = output_state.values["messages"][-1].content
-                    success = await send_response(
-                        from_number=from_number,
-                        chat=chat,
-                        response_text=response_message_content,
-                        message_type="text",
-                        whatsapp_token=bot.whatsapp_token,
-                        whatsapp_phone_number_id=bot.whatsapp_phone_number_id
-                    )
+                    try:
+                        success = await send_response(
+                            from_number=from_number,
+                            chat=chat,
+                            response_text=response_message_content,
+                            message_type="text",
+                            whatsapp_token=bot.whatsapp_token,
+                            whatsapp_phone_number_id=bot.whatsapp_phone_number_id
+                        )
+                        if not success:
+                            logger.error(f"Failed to send AI response to {from_number}")
+                    except Exception as e:
+                        logger.error(f"Error sending AI response to {from_number}: {e}", exc_info=True)
+                        success = False
 
                 if not success:
                     return Response(content="Failed to send message", status_code=500)
